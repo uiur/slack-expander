@@ -11,6 +11,8 @@ const randomImage = require('unique-random-array')([
   'https://i.gyazo.com/8985fbfb6fe3ab273bf1485bd2c2587f.png'
 ])
 
+const request = require('request')
+
 slack.on('open', () => {
   console.log(slack.team.name, slack.self.name)
 })
@@ -21,16 +23,29 @@ slack.on('message', (message) => {
   const channel = slack.getChannelGroupOrDMByID(message.channel)
   const user = slack.getUserByID(message.user)
   if (message.type === 'message' && user && (/demo.gyazo.com/).test(message.text)) {
-    channel.postMessage({
-      username: 'Gyazo',
-      icon_url: 'https://raw.githubusercontent.com/gyazo/gyazo-chrome-extension/master/icons/gyazo-128.png',
-      attachments: [
-        {
-          fallback: 'image',
-          image_url: randomImage(),
-        }
-      ]
+    request.post({
+      url: 'https://slack.com/api/files.upload',
+      formData: {
+        token: process.env.SLACK_TOKEN,
+        file: request(randomImage()),
+        channels: message.channel
+      }
+    }, function (err) {
+      if (err) {
+        console.error(err)
+        return
+      }
     })
+    // channel.postMessage({
+    //   username: 'Gyazo',
+    //   icon_url: 'https://raw.githubusercontent.com/gyazo/gyazo-chrome-extension/master/icons/gyazo-128.png',
+    //   attachments: [
+    //     {
+    //       fallback: 'image',
+    //       image_url: randomImage(),
+    //     }
+    //   ]
+    // })
   }
 })
 
